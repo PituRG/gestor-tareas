@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey); 
 
   await cargarTareas(supabaseClient); 
+  await cargarCategorias(supabaseClient); 
   
 
   // Seleccionamos el formulario por su id
@@ -104,6 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     //formularioTarea.hora.value = tarea.hora || '';
     formularioTarea.prioridad.value = tarea.prioridad || '';
     formularioTarea.completada.checked = tarea.completada || false;
+    formularioTarea.categoria.value = tarea.categoria_id || '';
 
     // Cambiamos los elementos visuales del formulario
     botonGuardar.textContent = "Guardar cambios";
@@ -124,10 +126,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const nuevaTarea = {
       titulo: formularioTarea.titulo.value,
       descripcion: formularioTarea.descripcion.value,
-      fecha: formularioTarea.fecha.value,
-      hora: formularioTarea.hora.value,
+      fecha: formularioTarea.fecha.value || null,
+      hora: formularioTarea.hora.value || null,
       prioridad: parseInt(formularioTarea.prioridad.value),
-      completada: formularioTarea.completada.checked
+      completada: formularioTarea.completada.checked,
+      categoria_id: formularioTarea.categoria.value || null
     };
 
     let resultado;
@@ -162,5 +165,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   await cargarTareas(supabase);
 
 }
+
+
+async function cargarCategorias(supabase) {
+  const selectCategoria = document.getElementById('categoria');
+  // Asumiendo que RLS está desactivado para desarrollo en la tabla 'categorias'
+  const { data: categorias, error } = await supabase
+    .from('categorias')
+    .select('*'); // Obtenemos todas las categorías
+
+  if (error) {
+    console.error('Error al cargar categorías:', error.message);
+    // Opcional: mostrar un mensaje de error al usuario
+    return;
+  }
+
+  console.log('Categorías cargadas:', categorias);
+
+  // Limpiamos las opciones existentes, excepto la primera (la de "Seleccione...")
+  selectCategoria.innerHTML = '<option value="">-- Seleccione una categoría --</option>';
+
+  // Añadimos las categorías obtenidas como opciones al select
+  categorias.forEach(categoria => {
+    const option = document.createElement('option');
+    option.value = categoria.id; // El valor de la opción será el UUID de la categoría
+    option.textContent = categoria.nombre; // El texto visible será el nombre de la categoría
+    selectCategoria.appendChild(option);
+  });
+}
+
 
 })
